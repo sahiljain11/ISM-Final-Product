@@ -1,67 +1,72 @@
-const fs = require('fs')
+const fs = require('fs');
+const util = require('util');
+const readFile = (fileName) => util.promisify(fs.readFile)(fileName, 'utf8');
+const tf = require('@tensorflow/tfjs');
+
+//import * as tf from '@tensorflow/tfjs-node';
+require('@tensorflow/tfjs-node');
+    
 var trainingData = "";
 
 function createModel() {
     const model = tf.sequential();
 
-    model.add(tf.layers.dense({inputShape: [1], units: 1, useBias: true}));
+    model.add(tf.layers.dense({inputShape: [100], units: 1, useBias: true}));
 
     model.add(tf.layers.dense({units: 1, useBias: true}));
     return model;
 }
 
-async function run() {
-    const data = await parseFile();
-    const values = data.map(d => ({
-        comment: d.split(" ")[0],
-        score: d.split(" ") [1]
-    }));
-}
-
 async function parseFile() {
-    fs.readFile('train-balanced.csv', 'utf-8', (err, data) => {
-        if (err) throw err;
-        const temp = data.split("/n");
-        trainingData = temp.map(d => ({
-            cleaned: d.split("\t")[1] + " " + d.split("\t")[4]
-        }));
-    })
-
-    const tensorData = converToTensor(data);
-    const {inputs, labels} = tensorData;
-
-    await trainModel(model, inputs, labels);
-    console.log('Done training');
-
+    data = await readFile('vectors.csv');
+    const temp = data.split("\r\n");
+    
+    trainingData = temp.map(d => ({
+	score: d.substring(0, 1),
+	comment: d.substring(2)
+    }));
+    
+    return trainingData;
 }
 
-function converToTensor(data) {
+async function converToTensor(data) {
     return tf.tidy(() => {
-
         tf.util.shuffle(data);
+        
+        console.log("Starting to map");
 
-        const sarcasticComments = data.map(d => d.comment);
-        const sarcasticScore = data.map(d => d.score);
+        const sarcasticComments = data.map(function(d) {
+            var splitted = d.comment.split(" ");
+            var cleaned = splitted.map(function(element) {
+                return parseInt(element, 10);
+            });
+            return cleaned;
+        });
+        
+        //console.log(sarcasticComments);
+        const sarcasticScore = data.map(d => parseInt(d.score));
+        console.log("Done with mapping"); 
+        sarcasticComments.pop();
+        sarcasticScore.pop();
 
-        const inputTensors = tf.tensor2d(sarcasticComments, [sarcasticComments.length, 1]);
-        const labelTensors = tf.tensor2d(sarcasticScore, [sarcasticScore.length, 1]);
+        console.log("Starting to create tensors");  
 
-        const inputMax = inputTensors.max();
-        const inputMin = inputTensors.min();
-        const labelMax = labelTensors.max();
-        const labelMin = labelTensors.min();
+        const commentTensors = tf.tensor2d(sarcasticComments);
+        const scoreTensors = tf.tensor2d(sarcasticScore);
 
-        const normalizedInputs = inputTensors.sub(inputMin).div(inputMax.sub(inputMin));
-        const normaledLabels = inputTensors.sub(labelMin).div(labelMax.sub(labelMin));
+        console.log("Finished creating tensors");  
+
+        //const inputMax = inputTensors.max();
+        //const inputMin = inputTensors.min();
+        //const scoreMax = scoreTensors.max();
+        //const scoreMin = scoreTensors.min();
+
+        //const normalizedInputs = inputTensors.sub(inputMin).div(inputMax.sub(inputMin));
+        //const scoresNormalized = scoresTensors.sub(scoreMin).div(scoreMax.sub(scoreMin));
 
         return {
-            inputs: normalizedInputs,
-            labels: normaledLabels,
-
-            inputMax,
-            inputMin,
-            labelMax,
-            labelMin
+            inputs: commentTensors,
+            labels: scoreTensors,
         }
     });
 }
@@ -80,12 +85,19 @@ async function trainModel(model, inputs, labels) {
         batchSize,
         epochs, 
         shuffle: true,
-        callbacks: tfvis.show.fitCallbacks (
-            {name: "Training performance"},
-            ['loss', 'mse'],
-            {height: 200, callbacks: ['onEpochEnd']}
-        )
+        callbacks: (epoch, log) => console.log('Epoch $(epoch): loss = $(log.loss)')
     })
 }
 
-const model = createModel();
+async function run() {
+        
+    var model = createModel();
+    data = await parseFile();
+    const tensorData = converToTensor(data);
+    const {inputs, labels} = tensorData;
+
+    await trainModel(model, inputs, labels);
+    console.log('Done training');
+}
+
+run();

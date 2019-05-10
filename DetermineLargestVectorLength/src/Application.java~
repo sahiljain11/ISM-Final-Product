@@ -1,0 +1,41 @@
+import java.util.*;
+import java.io.*;
+
+public class Application {
+
+    public static void main (String[] args) throw IOException {
+
+	Scanner kb = new Scanner(new File("train-balanced.csv"));
+	FileWriter fileWriter = new FileWriter(new File("cleaned-training-set"));
+
+	int maxVectorLength = 0;
+	
+	while (kb.hasNext()) {
+	    Stirng[] inputSplitted = kb.nextLine().split("\t");
+
+	    inputSplitted[1] = inputSplitted[1].toLowerCase();
+
+	    char[] messageArray = inputSplitted[1].toCharArray();
+	    String correctedMessage = "";
+
+	    for (int i = 0; i < messageArray.length; i++) {
+		if (!messageArray[i].equals(',') && !messageArray[i].equals('?') && !messageArray[i].equals('!') &&
+		    !messageArray[i].equals('.') && !messageArray[i].equals(':') && !messageArray[i].equals(';')) {
+		}
+	    }
+
+
+	    if (!kb.hasNext()) {
+		fileWriter.write(input + " " + x);
+		}
+	    else {
+		fileWriter.write(input + " " + x + "\n");
+	    }
+	    x++;
+	}
+
+	fileWriter.close();
+    }
+
+
+}

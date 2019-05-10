@@ -1,0 +1,11 @@
+
+
+public class Main {
+
+    public static void main (String[] args) {
+
+        Scanner kb = new Scanner(new File("dictionary.txt"));
+
+    }
+
+}

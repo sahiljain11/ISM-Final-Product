@@ -1,0 +1,35 @@
+import java.util.*;
+import java.io.*;
+
+public class Application {
+
+    public static void main (String[] args) {
+
+	Scanner kb = new Scanner(new File("cleaned-dictionary.txt"));
+	Scanner textReader = new Scanner(new File("whatever the csv is called"));
+	FileWriter writer = new FileWriter("vectors.csv");
+	HashMap dictionary = new HashMap();
+
+	while (kb.hasNext()) {
+	    String[] inputSplitted = kb.nextLine().split(" ");
+	    dicionary.put(inputSplitted[0], inputSplitted[1]);
+	}
+	
+	while (textReader.hasNext()) {
+	    String[] csvSplitted = textReader.nextLine().split("\t");
+
+	    String[] messageSplitted = csvSplitted[1].split(" ");
+
+	    String addString = csvSplitted[0];
+
+	    for (int i = 0; i < messageSplitted.length; i++) {
+		if (dictionary.contains(messageSplitted[i])) {
+		    addString += " " + dictionary.get(messageSplitted[i]);
+		}
+	    }
+
+	}
+
+    }
+    
+}
